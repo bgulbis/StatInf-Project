@@ -1,0 +1,133 @@
+---
+title: "Analysis of Tooth Growth Data"
+subtitle: "Statistical Inference Course Project - Part 2"
+author: "Brian Gulbis"
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+output: 
+  pdf_document: 
+    fig_caption: yes
+---
+
+
+## Overview
+
+In this report, the TooothGrowth data from the R datasets package will be analyzed to determine if there is a difference in the amount of tooth growth between subjects receving different types of Vitamin C supplements and doses. The data will be evaluated using the t-test, and the results will show whether or not there is a significant difference in the mean odontoblast length between groups.
+
+```{r data, echo=FALSE, warning=FALSE, message=FALSE}
+tg <- ToothGrowth
+library(ggplot2)
+library(dplyr)
+```
+
+## Exploratory Data Analysis
+
+An exploration of the data reveals two data elements which could be used to group the data: supplement type and supplement dose. In an exploratory plot of the data, it appears there may be a difference in the mean odontoblast length based on the supplement dose and by the supplment type for at least some of the doses (see figure 1). 
+
+```{r fig1, fig.cap="Odontoblast Length by Supplement Type and Dose", fig.width=4.5, fig.height=3, echo=FALSE}
+ggplot(tg, aes(x=dose, y=len, color=supp)) +
+    geom_point() +
+    scale_color_manual(values=c("OJ"="blue", "VC"="red")) +
+    xlab("Supplement Dose") +
+    ylab("Odontoblast Length (microns)") +
+    theme_bw()
+```
+
+Through a plot of the distribution of odontoblast length for each group (by supplement type and dose), it becomes more apparent that the mean odontoblast length is greater in the subjects who received orange juice supplementation at doses of 0.5 and 1 mg/day, but not at 2 mg/day, when compared with those who received the chemically pure Vitamin C supplement at the equiavelent dosages (see figure 2). The dashed blue line indicates the mean in each group of subjects. Additionally, the data appear to be approximately normally distributed within each group. 
+
+```{r explore, echo=FALSE}
+tg.mean <- group_by(tg, supp, dose) %>%
+    summarize(mean.len = mean(len))
+```
+
+```{r fig2, fig.cap="Comparison of Odontoblast Length by Supplement Type and Dosage", fig.width=4.5, fig.height=3, echo=FALSE}
+ggplot(tg, aes(x=len)) +
+    geom_histogram(binwidth=2, color="black", fill="light blue", aes(y=..density..)) +
+    geom_density() + 
+    geom_vline(data=tg.mean, aes(xintercept=mean.len), color="blue", linetype="dashed") +
+    facet_grid(supp ~ dose) + 
+    xlab("Odontoblast Length (microns)") +
+    theme_bw()
+```
+
+
+## Hypothesis Testing
+
+Since it appears that there may be a difference in the mean odontoblast length between supplement types and dosages, these differences will now be tested to determine if there truly is a significant difference. The data will be subsetted into six groups based on supplement type and supplement dose. The results of each supplement type will compared at equivalent supplement dosages using the t-test. The null hypothesis for each comparison is that there is no difference in the mean odontoblast length for subjects receiving the different supplement types or dosages.
+
+* $H_0 : \mu = \mu_0$
+* $H_a : \mu \ne \mu_0$
+
+The results of the comparisons are displayed in table 1 below. 
+
+```{r compare, echo=FALSE}
+t1 <- t.test(len ~ supp, data=tg, subset=(dose == 0.5))
+t2 <- t.test(len ~ supp, data=tg, subset=(dose == 1))
+t3 <- t.test(len ~ supp, data=tg, subset=(dose == 2))
+```
+
+Dosage  | Means (OJ vs. VC) | t-Statistic       | 95% Confidence Interval   | p-Value
+--------|-------------------|-------------------|---------------------------|---------------
+0.5     | `r t1$estimate`   | `r round(t1$statistic,3)`  | `r round(t1$conf.int,3)` | `r round(t1$p.value,3)`
+1.0     | `r t2$estimate`   | `r round(t2$statistic,3)`  | `r round(t2$conf.int,3)` | `r round(t2$p.value,3)`
+2.0     | `r t3$estimate`   | `r round(t3$statistic,3)`  | `r round(t3$conf.int,3)` | `r round(t3$p.value,3)`
+
+Table: Comparison of Mean Odontoblast Length By Supplement Type within 3 Different Supplement Dosages
+
+
+This reveals that there is a significant difference between the two supplement types at doses of 0.5 and 1 mg/day, because the 95% confidence interval does not cross 0, meaning that the means cannot be the same. Additionally, the p-value is $< 0.05$, which also indicates that the means are significantly different. For these two groups, the null hypothesis is rejected.
+
+However, for the 2 mg/day group, the 95% confidence interval does cross 0, which means that the means could be equivalent. Likewise, the p-value is $\ge 0.05$. Therefore, for the 2 mg/day group, the null hypothesis is accepted.
+
+\newpage
+## Conclusions
+
+In this the report, the Tooth Growth data from the R datasets package was evaluated to determine if there was a difference in the amount of tooth growth, as measured by the odontoblast length in microns, between subjects receiving different types of Vitamin C supplmentation and dosages. 
+
+The data in this analysis were assumed to be independent and identically distributed random variables. Additionally, the data were assumed to follow a normal distribution. 
+
+Since the data were assumed to be normally distributed, the t-test was used to perform comparisons. For the t-test calculations, it was assumed that the variances were not equal between the groups in each comparison.
+
+The results of the hypothesis testing show that there is a difference in the mean odontoblast length in the groups receiving different supplement types at dosages of 0.5 and 1 mg/day, favoring larger tooth growth in the groups receiving orange juice supplementation. No difference was found in the groups receiving supplementation at a dose of 2 mg/day. 
+
+\newpage
+## Appendix
+
+The following is the R code used to produce the figures and statistical results in this report.
+
+#### Calculating the mean in each group
+
+```{r explore-code, eval=FALSE}
+tg.mean <- group_by(tg, supp, dose) %>%
+    summarize(mean.len = mean(len))
+```
+
+#### Figure 1
+
+```{r fig1-code, eval=FALSE}
+ggplot(tg, aes(x=dose, y=len, color=supp)) +
+    geom_point() +
+    scale_color_manual(values=c("OJ"="blue", "VC"="red")) +
+    xlab("Supplement Dose") +
+    ylab("Odontoblast Length (microns)") +
+    theme_bw()
+```
+
+#### Figure 2
+
+```{r fig2-code, eval=FALSE}
+ggplot(tg, aes(x=len)) +
+    geom_histogram(binwidth=2, color="black", fill="light blue", aes(y=..density..)) +
+    geom_density() + 
+    geom_vline(data=tg.mean, aes(xintercept=mean.len), color="blue", linetype="dashed") +
+    facet_grid(supp ~ dose) + 
+    xlab("Odontoblast Length (microns)") +
+    theme_bw()
+```
+
+#### Comparison of groups using the t-test
+
+```{r compare-code, eval=FALSE}
+t1 <- t.test(len ~ supp, data=tg, subset=(dose == 0.5))
+t2 <- t.test(len ~ supp, data=tg, subset=(dose == 1))
+t3 <- t.test(len ~ supp, data=tg, subset=(dose == 2))
+```
