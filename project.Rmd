@@ -35,7 +35,6 @@ sim.df <- data.frame(clt = apply(m, 1, sim.func, 40), sm = apply(m, 1, mean), sv
 
 ```
 
-
 ## Sample Mean versus Theoretical Mean
 
 The mean of the exponential distribution is $1 / \lambda$, which in this case is expected to be $1 / 0.2 = 5$.
@@ -53,15 +52,12 @@ ggplot(sim.df, aes(x=sm)) +
     theme_bw() 
 ```
 
-
 ## Sample Variance versus Theoretical Variance
 
-The variance of the sample mean is $\sigma^2 / n$. In this case, $\sigma^2 = 1 / \lambda^2 = 1 / 0.2^2 = 25$, and $n = 40$. Therefore, the expected variance of the sample mean is $25 / 40 = 0.625$. 
+The variance of the exponential distribution is $1 / \lambda^2$, which in this case is expected to be $1 / 0.22 = 25$. In the sample of random exponentials, the mean of the variance for each of the 1,000 samples is `r round(mean(sim.df$sv), 2)`, which
+is quite close to the expected variance, differing by only `r round(abs(1 - mean(sim.df$sv) / 25), 2)`%. A plot of the distribution of sample variances shows that they are essentially centered around the expected variance (see figure 2). The sample variance is indicated by the black line, while the expected variance is indicated by the dashed blue line.
 
-In the sample of random exponentials, the variance of the sample mean is `r round(var(sim.df$sm), 3)`, which is quite close to the expected variance of the sample mean, differing by only `r round(abs(1 - var(sim.df$sm) / 0.625) * 100, 2)`%.
-
-**Remove**
-A plot of the distribution of sample variances shows that they are essentially centered around the expected variance (see figure 2). The sample variance is indicated by the black line, while the expected variance is indicated by the dashed blue line.
+The variance of the sample mean is $\sigma^2 / n$. In this case, $\sigma^2 = 1 / \lambda^2 = 1 / 0.2^2 = 25$, and $n = 40$. Therefore, the expected variance of the sample mean is $25 / 40 = 0.625$. In the sample of random exponentials, the variance of the sample mean is `r round(var(sim.df$sm), 3)`, which is quite close to the expected variance of the sample mean, differing by only `r round(abs(1 - var(sim.df$sm) / 0.625) * 100, 2)`%.
 
 ```{r fig2, fig.cap="Distribution of Sample Variances Compared with Expected Variance", fig.width=4, fig.height=2.7,echo=FALSE}
 ggplot(sim.df, aes(x=sv)) + 
