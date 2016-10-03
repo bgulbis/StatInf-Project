@@ -1,0 +1,186 @@
+---
+title: "Simulation of the Exponential Distribution"
+subtitle: "Statistical Inference Course Project - Part 1"
+author: "Brian Gulbis"
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+output: 
+  pdf_document: 
+    fig_caption: yes
+---
+
+```{r packages, echo=FALSE}
+library(ggplot2)
+```
+
+## Overview
+
+In this report, the exponential distribution will be explored using simulations to determine if it follows the Central Limit Theorem. The sample mean will be compared with the theoretical mean, and the sample variance will be compared with the theoretical variance. Finally, it will be shown that the exponential distribution is, in fact, approximately normally distributed. 
+
+## Simulation
+
+The exponential distribution will be simulated by taking the mean and variance of 40 random exponentials. The rate parameter, or lambda ($\lambda$), will be set to 0.2. The simulation will be repeated 1,000 times. To properly normalize the data, the expected mean will be subtracted from the sample mean and then divided by the standard error, using the following equation from the Central Limit Theorem:
+
+$$
+\frac{\bar X_n - \mu}{\sigma / \sqrt{n}} = \frac{\sqrt n (\bar X_n - \mu)}{\sigma}
+$$
+
+
+```{r echo=FALSE}
+nosim <- 1000
+sim.func <- function(x, n) sqrt(n) * (mean(x) - 5) / 5
+
+m <- matrix(rexp(40 * nosim, 0.2), nosim)
+
+sim.df <- data.frame(clt = apply(m, 1, sim.func, 40), sm = apply(m, 1, mean), sv = apply(m, 1, var))
+
+```
+
+
+## Sample Mean versus Theoretical Mean
+
+The mean of the exponential distribution is $1 / \lambda$, which in this case is expected to be $1 / 0.2 = 5$.
+
+In the sample of random exponentials, the mean of the mean for the 1,000 samples is `r round(mean(sim.df$sm), 2)`, which is very close to the expected mean, differing by just `r round(abs(1 - mean(sim.df$sm) / 5) * 100, 2)`%. 
+
+A plot of the distribution of sample means shows that they are essentially centered around the expected mean (see figure 1). The sample mean is indicated by the black line, while the expected mean is indicated by the dashed blue line.
+
+```{r fig1, fig.cap="Sample Mean vs. Expected Mean of Random Exponentials", fig.width=4, fig.height=2.7, echo=FALSE}
+ggplot(sim.df, aes(x=sm)) +
+    geom_histogram(binwidth=0.3, color="black", fill="light green") +
+    geom_vline(xintercept=mean(sim.df$sm), size=1.2, color="black") +
+    geom_vline(xintercept=5, linetype="dashed", size=1.2, color="blue") +
+    xlab("Sample Means") +
+    theme_bw() 
+```
+
+
+## Sample Variance versus Theoretical Variance
+
+The variance of the sample mean is $\sigma^2 / n$. In this case, $\sigma^2 = 1 / \lambda^2 = 1 / 0.2^2 = 25$, and $n = 40$. Therefore, the expected variance of the sample mean is $25 / 40 = 0.625$. 
+
+In the sample of random exponentials, the variance of the sample mean is `r round(var(sim.df$sm), 3)`, which is quite close to the expected variance of the sample mean, differing by only `r round(abs(1 - var(sim.df$sm) / 0.625) * 100, 2)`%.
+
+**Remove**
+A plot of the distribution of sample variances shows that they are essentially centered around the expected variance (see figure 2). The sample variance is indicated by the black line, while the expected variance is indicated by the dashed blue line.
+
+```{r fig2, fig.cap="Distribution of Sample Variances Compared with Expected Variance", fig.width=4, fig.height=2.7,echo=FALSE}
+ggplot(sim.df, aes(x=sv)) + 
+    geom_histogram(binwidth=5, colour = "black", fill="light green") +
+    geom_vline(xintercept=mean(sim.df$sv), color="black", size=1.2) +
+    geom_vline(xintercept=25, color="blue", linetype="dashed", size=1.2) +
+    xlab("Sample Variances") +
+    theme_bw()
+```
+
+## Distribution
+
+Initially, the exponential distribution may not seem to be normally distributed. If a sample of 1,000 properly normalized random exponentials with $\lambda = 0.2$ is plotted, the distribution appears to be skewed to the left of the mean and is not bell-shaped (see figure 3). 
+
+```{r exp, echo=FALSE}
+exp.dist <- rexp(1000, 0.2)
+
+exp.df <- data.frame(x = exp.dist, clt = (exp.dist - 5) / 5)
+```
+
+```{r fig3, fig.cap="Distribution of 1,000 Normalized Random Exponentials", fig.width=4, fig.height=2.7, echo=FALSE, warning=FALSE}
+
+ggplot(exp.df, aes(x = clt)) + 
+    geom_histogram(binwidth=0.5, color="black", fill="light green", aes(y = ..density..)) +
+    geom_density(size=1, alpha=0.3, fill="black") +
+    geom_vline(xintercept=mean(exp.df$clt), size=1, color="black", linetype="dashed") +
+    stat_function(fun = dnorm, size = 1, color="blue") + 
+    xlab("Normalized Random Exponentials") +
+    theme_bw()
+```
+
+However, when the exponential distribution is simulated by taking the mean of 40 random exponentials, repeated 1,000 times, and then properly normalized, the distribution does in fact approximate the normal distribution and is centered around the mean (see figure 4). Furthermore, the mean of the normalized distribution is `r round(mean(sim.df$clt), 2)` and variance is `r round(var(sim.df$clt), 2)`, which are very close to the expected mean of 0 and variance of 1 for a standard normal distribution.
+
+In both figures 3 and 4, the sample distribution is indicated by the black shaded area, while a standard normal distribution is indicated by the blue line. The sample mean is indicated by the dashed black line.
+
+```{r fig4, fig.cap="Distribution of 1,000 Means of 40 Random Exponentials", fig.width=4, fig.height=2.7, echo=FALSE}
+ggplot(sim.df, aes(x = clt)) +
+    geom_histogram(binwidth=0.5, color="black", fill="light green", aes(y = ..density..)) +
+    geom_density(size=1, alpha=0.3, fill="black") + 
+    geom_vline(xintercept=mean(sim.df$clt), size=1, color="black", linetype="dashed") +
+    stat_function(fun=dnorm, size=1, color="blue") +
+    xlab("Normalized Random Exponentials") +
+    theme_bw()
+```
+
+\pagebreak
+
+## Appendix
+
+The following is the R code used in the simulations and to produce the figures in this report.
+
+#### Simulation of the exponential distribution
+
+The simulation was done by taking the mean of 40 random exponentials, subtracting off the expected mean, and dividing by the standard error. This was repeated 1,000 times.
+
+```{r sim-code, eval=FALSE}
+nosim <- 1000
+sim.func <- function(x, n) sqrt(n) * (mean(x) - 5) / 5
+
+m <- matrix(rexp(40 * nosim, 0.2), nosim)
+
+sim.df <- data.frame(clt = apply(m, 1, sim.func, 40), sm = apply(m, 1, mean), sv = apply(m, 1, var))
+```
+
+#### Simulation of a large number of random exponentials
+
+The simulation took 1,000 random exponentials and normalized them by subtracting off the expected mean, then dividing by the standard error.
+
+```{r exp-code, eval=FALSE}
+exp.dist <- rexp(1000, 0.2)
+
+exp.df <- data.frame(x = exp.dist, clt = (exp.dist - 5) / 5)
+```
+
+#### Figure 1
+
+```{r fig1-code, fig.cap="Sample Mean vs. Expected Mean of Random Exponentials", fig.width=4, fig.height=2.7, eval=FALSE}
+ggplot(sim.df, aes(x=sm)) +
+    geom_histogram(binwidth=0.3, color="black", fill="light green") +
+    geom_vline(xintercept=mean(sim.df$sm), size=1.2, color="black") +
+    geom_vline(xintercept=5, linetype="dashed", size=1.2, color="blue") +
+    xlab("Sample Means") +
+    theme_bw() 
+```
+
+#### Figure 2
+
+```{r fig2-code, fig.cap="Distribution of Sample Variances Compared with Expected Variance", fig.width=4, fig.height=2.7, eval=FALSE}
+ggplot(sim.df, aes(x=sv)) + 
+    geom_histogram(binwidth=5, colour = "black", fill="light green") +
+    geom_vline(xintercept=mean(sim.df$sv), color="black", size=1.2) +
+    geom_vline(xintercept=25, color="blue", linetype="dashed", size=1.2) +
+    xlab("Sample Variances") +
+    theme_bw()
+```
+
+#### Figure 3
+
+```{r fig3-code, fig.cap="Distribution of 1,000 Random Exponentials", fig.width=4, fig.height=2.7, eval=FALSE}
+ggplot(exp.df, aes(x = clt)) + 
+    geom_histogram(binwidth=0.5, color="black", fill="light green", aes(y = ..density..)) +
+    geom_density(size=1, alpha=0.3, fill="black") +
+    geom_vline(xintercept=mean(exp.df$clt), size=1, color="black", linetype="dashed") +
+    stat_function(fun = dnorm, size = 1, color="blue") + 
+    xlab("Normalized Random Exponentials") +
+    theme_bw()
+```
+
+#### Figure 4
+
+```{r fig4-code, fig.cap="Distribution of 1,000 Means of 40 Random Exponentials", fig.width=4, fig.height=2.7, eval=FALSE}
+ggplot(sim.df, aes(x = clt)) +
+    geom_histogram(binwidth=0.5, color="black", fill="light green", aes(y = ..density..)) +
+    geom_density(size=1, alpha=0.3, fill="black") + 
+    geom_vline(xintercept=mean(sim.df$clt), size=1, color="black", linetype="dashed") +
+    stat_function(fun=dnorm, size=1, color="blue") +
+    xlab("Normalized Random Exponentials") +
+    theme_bw()
+```
+
+
+
